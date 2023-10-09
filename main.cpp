@@ -3,6 +3,7 @@
 #include <string>
 #include <time.h>
 
+
 using std::endl;
 using std::cout;
 using std::string;
@@ -35,24 +36,25 @@ public:
     void update(){
         if(infected){
             time_sick = time_sick - 1;
-            if(time_sick <=0){
-                state = "vaccinated";
-                infected = false;
-                vaccinated = true;
-            }
+            
         }
     }
 
     void vaccinate(){
+        
         state = "vaccinated";
         infected = false;
         vaccinated = true;
+    
     }
 
     string get_state(){
         return state;
     }
 
+    int get_time_sick(){
+        return time_sick;
+    }
 };
 
 class Population{
@@ -80,28 +82,19 @@ public:
     }
 
     bool luck(){
-        int caught = rand()&100;
-        int safe;
-
+        int caught = rand()%100;
+        int safe = 0;
+        
         for(Person p: People){
             if(p.get_state() == "vaccinated"){
                 safe++;
             }
         }
-
-        if(safe > 8000){
-            if(caught < 5){
-                return true;
-            } else{
-                return false;
-            }
+        if(caught < 10){
+            return true;
         } else{
-            if(caught < 10){
-                return true;
-            } else{
-                return false;
-            }
-        }
+            return false;
+        }  
     }
 
     void update(int number_of_interactions, int time_sick){
@@ -124,66 +117,66 @@ public:
                     }
                 }
             }
-
             else if(p.get_state() == "infected"){
-                for(int i = 0; i < number_of_interactions; i++){
-                    roll = rand()%population_size;
-                    bool catch_infection = luck();
+                if(p.get_time_sick() > 1){
+                    for(int i = 0; i < number_of_interactions; i++){
+                        roll = rand()%population_size;
+                        bool catch_infection = luck();
 
-                    if(People[roll].get_state() == "well"){
-                        if(catch_infection){
-                            People[roll].infect(days);
+                        if(People[roll].get_state() == "well"){
+                            if(catch_infection){
+                                People[roll].infect(days);
+                            }
                         }
                     }
                 }
-            }
+                else if(p.get_time_sick() <= 0){
+                    p.vaccinate();
+                }              
             index++;
+            }
         }
     }
-
-    void get_statistics(int &sick, int &vaccinated, int &well){
+    void get_statistics(int &sick, int &vaccinated, int &well) {
         sick = 0;
         vaccinated = 0;
         well = 0;
 
-        for (Person p: People){
-            if(p.get_state() == "infected"){
+        for (Person p : People) {
+            if (p.get_state() == "infected") {
                 sick++;
-            }
-            else if(p.get_state() == "vaccinated"){
+            } else if (p.get_state() == "vaccinated") {
                 vaccinated++;
-            }
-            else{
+            } else {
                 well++;
             }
         }
-    }
+    }   
 };
 
 int main(){
 
-    //srand(time(NULL));
+    srand(time(NULL));
 
-    int population_size = 10000;
+    int population_size = 1000;
     int time_sick = 5;
     int daily_interactions = 10;
 
-    int num_sick;
-    int num_vaccinated;
-    int num_well;
+    int num_sick = 1;
+    int num_vaccinated = 0;
+    int num_well= 0;
 
     Population COVID_Pop(population_size, time_sick);
 
     int day = 1;
 
-    while(num_sick > 1){
+    while (num_sick > 0) {
         COVID_Pop.get_statistics(num_sick, num_vaccinated, num_well);
-        cout << day << ", "<< num_sick<<", "<< num_vaccinated<<endl;
-
+        cout << "Day " << day << ": " << num_sick << " sick individuals" << endl;
         day++;
         COVID_Pop.update(daily_interactions, time_sick);
     }
+
     cout<<"done"<<endl;
     return 0;
-
 }
